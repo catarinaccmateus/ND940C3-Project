@@ -17,13 +17,13 @@
         android:background="#2D376E"
         android:contentDescription="@string/load_image_description"
         android:padding="@dimen/default_app_margin"
-        android:tint="#8899F4"
         app:layout_constraintBottom_toTopOf="@+id/options_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:drawable/stat_sys_download" />
+        app:srcCompat="@android:drawable/stat_sys_download"
+        app:tint="#8899F4" />
 
     <RadioGroup
         android:id="@+id/options_container"
@@ -72,6 +72,9 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:button_color="@color/buttonColor"
+        app:button_loading_color="@color/loadingColor"
+        app:button_disable_color="@color/disableColor"
         app:layout_constraintVertical_bias="0.86" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

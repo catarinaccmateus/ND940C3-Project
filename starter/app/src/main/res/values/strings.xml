@@ -17,5 +17,10 @@
     <string name="label_retrofit">Retrofit - Type-safe HTTP client for Android and Java by Square, Inc</string>
 
     <string name="load_image_description">Loading image</string>
+    <string name="toast_content">You need to select one option.</string>
+    <string name="button_label">Download</string>
+    <string name="button_label_loading">Loading</string>
+
+
 
 </resources>
