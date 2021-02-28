@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import java.lang.Exception
 
 
 class MainActivity : AppCompatActivity() {
@@ -29,6 +30,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationManager: NotificationManager
     private lateinit var pendingIntent: PendingIntent
     private lateinit var action: NotificationCompat.Action
+    private lateinit var downloadManager: DownloadManager
+    private var downloadStatus = ""
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,14 +42,21 @@ class MainActivity : AppCompatActivity() {
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 
         custom_button.setOnClickListener {
+            custom_button.buttonState = ButtonState.Clicked
             if (loadURL.isEmpty()) {
                 Toast.makeText(this, R.string.toast_content, Toast.LENGTH_SHORT).show()
+                custom_button.buttonState = ButtonState.Disabled
             } else {
                 if (isOnline(this)) {
-                    Log.i("THIS", "is online")
-                    download()
+                    custom_button.buttonState = ButtonState.Loading
+                    try {
+                        download()
+                    } catch(e: Exception) {
+                        Log.w("MainActivity", e.toString())
+                        Toast.makeText(this, "There was an error loading. Try again.", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    Log.i("THIS", "is not online")
+                    custom_button.buttonState = ButtonState.Completed
                     Toast.makeText(this, "Check internet connection", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -53,23 +64,54 @@ class MainActivity : AppCompatActivity() {
 
         options_container.setOnCheckedChangeListener(object : RadioGroup.OnCheckedChangeListener {
             override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
+                custom_button.buttonState = ButtonState.Completed
                 val radioButton: RadioButton = options_container.findViewById(checkedId)
                 val index = options_container.indexOfChild(radioButton)
                 when (index) {
-                    1 -> loadURL = GLIDE_URL
-                    2 -> loadURL = LOAD_APP_URL
-                    3 -> loadURL = RETROFIT_URL
+                    0 -> loadURL = GLIDE_URL
+                    1 -> loadURL = LOAD_APP_URL
+                    2 -> loadURL = RETROFIT_URL
                     else -> loadURL = ""
                 }
             }
         })
     }
 
+    override fun onDestroy() {
+        unregisterReceiver(receiver)
+        super.onDestroy()
+    }
+
     private val receiver = object : BroadcastReceiver() {
+
         override fun onReceive(context: Context?, intent: Intent?) {
             val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            custom_button.buttonState = ButtonState.Completed
+
+            if (id != null) {
+                val query = DownloadManager.Query()
+                    .setFilterById(id)
+
+                val cursor = downloadManager.query(query)
+
+                if (cursor.moveToFirst()) {
+                    val status: Int =
+                        cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                    cursor.close()
+
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        downloadStatus = "Succeeded"
+                    } else {
+                        downloadStatus = "Failed"
+                    }
+                }
+
+                }
+
+
         }
     }
+
 
     private fun download() {
         val request =
@@ -80,9 +122,11 @@ class MainActivity : AppCompatActivity() {
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
 
-        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
+
     }
 
     private fun isOnline(context: Context): Boolean {
@@ -92,13 +136,10 @@ class MainActivity : AppCompatActivity() {
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         if (capabilities != null) {
             if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
                 return true
             } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
                 return true
             } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
-                Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
                 return true
             }
         }

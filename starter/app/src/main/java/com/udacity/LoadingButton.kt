@@ -8,6 +8,7 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import android.view.animation.LinearInterpolator
 import androidx.core.content.withStyledAttributes
 import java.util.*
 import kotlin.properties.Delegates
@@ -20,17 +21,12 @@ class LoadingButton @JvmOverloads constructor(
     private var bgColor: Int = 0
     private var bgColorLoading: Int = 0
     private var bgColorDisabled: Int = 0
-    private var buttonDisabled: Boolean = false
     private var textColor: Int = Color.WHITE
     private var valueAnimator = ValueAnimator()
-    @Volatile
-    private var progress: Double = 0.0
-    private val updateListener = ValueAnimator.AnimatorUpdateListener {
-        progress = (it.animatedValue as Float).toDouble()
 
-        invalidate()
-        requestLayout()
-    }
+    @Volatile
+    private var progress: Int = 0
+
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -40,27 +36,47 @@ class LoadingButton @JvmOverloads constructor(
     }
 
 
-    private var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Completed) { p, old, new ->
-
-    }
-
-
     init {
-    isClickable = true
+        isClickable = true
 
         context.withStyledAttributes(attrs, R.styleable.LoadingButton) {
             bgColor = getColor(R.styleable.LoadingButton_button_color, 0)
             bgColorDisabled = getColor(R.styleable.LoadingButton_button_disable_color, 0)
             bgColorLoading = getColor(R.styleable.LoadingButton_button_loading_color, 0)
         }
-        valueAnimator = AnimatorInflater.loadAnimator(context, R.animator.animation) as ValueAnimator
-        valueAnimator.addUpdateListener(updateListener)
+        valueAnimator = ValueAnimator.ofInt(0, 100).apply {
+            duration = 2000
+            interpolator = LinearInterpolator()
+            addUpdateListener { valueAnimator ->
+                progress = this.animatedValue as Int
+                invalidate()
+                requestLayout()
+            }
+        }
+    }
 
+    var buttonState: ButtonState by Delegates.observable<ButtonState>(ButtonState.Disabled) { p, old, new ->
+        when (new) {
+            ButtonState.Loading -> {
+                valueAnimator.start()
+                invalidate()
+                requestLayout()
+            }
+            ButtonState.Completed -> {
+                valueAnimator.cancel()
+                invalidate()
+                requestLayout()
+            }
+            ButtonState.Disabled -> {
+                invalidate()
+               requestLayout()
+            }
+        }
     }
 
     private val rect = RectF(
         740f,
-        50f,
+        40f,
         810f,
         110f
     )
@@ -69,24 +85,30 @@ class LoadingButton @JvmOverloads constructor(
     @SuppressLint("ResourceAsColor")
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
         //Drawing Button
         val width = width
         val height = height
         paint.color =
-            if (buttonDisabled)
+            if (buttonState === ButtonState.Disabled)
                 bgColorDisabled
-             else
-            bgColor
+            else
+                bgColor
         if (buttonState === ButtonState.Loading) {
+
+            //Drawing button loading
             canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
             paint.color = bgColorLoading
             canvas.drawRect(
                 0f, 0f,
-                (width * (progress / 100)).toFloat(), height.toFloat(), paint
+                (width * (progress.toDouble() / 100)).toFloat(), height.toFloat(), paint
             )
+            //Drawing loading arc
             paint.color = resources.getColor(R.color.colorAccent)
-            canvas.drawArc(rect, 0f, (360 * (progress / 100)).toFloat(), true, paint)
+            canvas.drawArc(rect, 0f, (360 * (progress.toDouble() / 100)).toFloat(), true, paint)
         } else {
+
+            //drawing normal button
             canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
         }
 
@@ -96,7 +118,7 @@ class LoadingButton @JvmOverloads constructor(
         val buttonLabel =
             if (buttonState === ButtonState.Loading)
                 resources.getString(R.string.button_label_loading)
-        else
+            else
                 resources.getString(R.string.button_label)
         canvas.drawText(
             buttonLabel.toUpperCase(Locale.ROOT),
@@ -120,23 +142,11 @@ class LoadingButton @JvmOverloads constructor(
         setMeasuredDimension(w, h)
     }
 
-    private fun buttonAnimation() {
-        valueAnimator.start()
-    }
 
     override fun performClick(): Boolean {
         super.performClick()
-        if (buttonState === ButtonState.Completed) buttonState = ButtonState.Loading
-        buttonAnimation()
-        invalidate()
         return true
     }
 
-    fun downloadCompleted() {
-        valueAnimator.cancel()
-        buttonState =  ButtonState.Completed
-        invalidate()
-        requestLayout()
-    }
 
 }
