@@ -68,6 +68,7 @@ class LoadingButton @JvmOverloads constructor(
                 requestLayout()
             }
             ButtonState.Disabled -> {
+                valueAnimator.cancel()
                 invalidate()
                requestLayout()
             }
