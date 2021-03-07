@@ -191,8 +191,7 @@ class MainActivity : AppCompatActivity() {
 
         val appImage = BitmapFactory.decodeResource(
             resources,
-            R.drawable.ic_launcher_foreground
-        )
+            R.drawable.images)
         val detailIntent = Intent(applicationContext, DetailActivity::class.java)
         detailIntent.putExtra("DOWNLOAD_FILE", downloadedFile)
         detailIntent.putExtra("DOWNLOAD_STATUS", downloadStatus)
@@ -201,13 +200,15 @@ class MainActivity : AppCompatActivity() {
 
 
         builder
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_assistant_black_24dp)
             .setContentTitle(
-                applicationContext.getString(R.string.notification_title)
+                getString(R.string.app_name)
             )
             .setContentText(message)
+            .setLargeIcon(appImage)
             .setStyle(NotificationCompat.BigPictureStyle()
-                .bigPicture(appImage))
+                .bigPicture(appImage)
+                .bigLargeIcon(null))
             .setChannelId(channelId)
             .addAction(
                 R.drawable.ic_launcher_foreground,
