@@ -45,7 +45,7 @@ class LoadingButton @JvmOverloads constructor(
             bgColorLoading = getColor(R.styleable.LoadingButton_button_loading_color, 0)
         }
         valueAnimator = ValueAnimator.ofInt(0, 100).apply {
-            duration = 2000
+            duration = 3000
             interpolator = LinearInterpolator()
             addUpdateListener { valueAnimator ->
                 progress = this.animatedValue as Int

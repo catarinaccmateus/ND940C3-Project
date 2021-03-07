@@ -26,6 +26,7 @@
     <string name="app_notification_channel_id">load_app_channel_id</string>
     <string name="status_label_detail">Status</string>
     <string name="file_label_details">File</string>
+    <string name="back_button_label">Go Back</string>
 
 
 </resources>
